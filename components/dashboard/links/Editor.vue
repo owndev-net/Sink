@@ -1,5 +1,4 @@
 <script setup>
-import { DependencyType } from '@/components/ui/auto-form/interface'
 import { LinkSchema, nanoid } from '@/schemas/link'
 import { toTypedSchema } from '@vee-validate/zod'
 import { Shuffle, Sparkles } from 'lucide-vue-next'
@@ -16,7 +15,6 @@ const props = defineProps({
 
 const emit = defineEmits(['update:link'])
 
-const { t } = useI18n()
 const link = ref(props.link)
 const dialogOpen = ref(false)
 
@@ -42,7 +40,7 @@ const EditLinkSchema = LinkSchema.pick({
 
 const fieldConfig = {
   slug: {
-    disabled: isEdit,
+    // Removed disabled condition to allow editing
   },
   optional: {
     comment: {
@@ -52,12 +50,7 @@ const fieldConfig = {
 }
 
 const dependencies = [
-  {
-    sourceField: 'slug',
-    type: DependencyType.DISABLES,
-    targetField: 'slug',
-    when: () => isEdit,
-  },
+  // Removed the dependency that disables slug editing
 ]
 
 const form = useForm({
@@ -110,17 +103,23 @@ async function onSubmit(formData) {
     ...(formData.optional || []),
     expiration: formData.optional?.expiration ? date2unix(formData.optional?.expiration, 'end') : undefined,
   }
+
+  // Add oldSlug if slug has changed
+  if (isEdit && props.link.slug !== formData.slug) {
+    link.oldSlug = props.link.slug
+  }
+
   const { link: newLink } = await useAPI(isEdit ? '/api/link/edit' : '/api/link/create', {
     method: isEdit ? 'PUT' : 'POST',
     body: link,
   })
   dialogOpen.value = false
-  emit('update:link', newLink, isEdit ? 'edit' : 'create')
+  emit('update:link', newLink)
   if (isEdit) {
-    toast(t('links.update_success'))
+    toast('Link updated successfully')
   }
   else {
-    toast(t('links.create_success'))
+    toast('Link created successfully')
   }
 }
 
@@ -136,22 +135,22 @@ const { previewMode } = useRuntimeConfig().public
           variant="outline"
           @click="randomSlug"
         >
-          {{ $t('links.create') }}
+          Create Link
         </Button>
       </slot>
     </DialogTrigger>
     <DialogContent class="max-w-[95svw] max-h-[95svh] md:max-w-lg grid-rows-[auto_minmax(0,1fr)_auto]">
       <DialogHeader>
-        <DialogTitle>{{ link.id ? $t('links.edit') : $t('links.create') }}</DialogTitle>
+        <DialogTitle>{{ link.id ? 'Edit Link' : 'Create Link' }}</DialogTitle>
       </DialogHeader>
       <p
         v-if="previewMode"
         class="text-sm text-muted-foreground"
       >
-        {{ $t('links.preview_mode_tip') }}
+        The preview mode link is valid for up to 24 hours.
       </p>
       <AutoForm
-        class="overflow-y-auto px-2 space-y-2"
+        class="px-2 space-y-2 overflow-y-auto"
         :schema="EditLinkSchema"
         :form="form"
         :field-config="fieldConfig"
@@ -163,7 +162,7 @@ const { previewMode } = useRuntimeConfig().public
             v-if="!isEdit"
             class="relative"
           >
-            <div class="flex absolute right-0 top-1 space-x-3">
+            <div class="absolute right-0 flex space-x-3 top-1">
               <Shuffle
                 class="w-4 h-4 cursor-pointer"
                 @click="randomSlug"
@@ -186,11 +185,11 @@ const { previewMode } = useRuntimeConfig().public
               variant="secondary"
               class="mt-2 sm:mt-0"
             >
-              {{ $t('common.close') }}
+              Close
             </Button>
           </DialogClose>
           <Button type="submit">
-            {{ $t('common.save') }}
+            Save
           </Button>
         </DialogFooter>
       </AutoForm>
