@@ -49,7 +49,7 @@ export default defineNuxtConfig({
     },
   },
 
-  compatibilityDate: '2024-07-08',
+  compatibilityDate: '2025-05-06',
 
   nitro: {
     experimental: {
