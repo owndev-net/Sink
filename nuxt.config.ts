@@ -49,11 +49,13 @@ export default defineNuxtConfig({
     },
   },
 
-  compatibilityDate: '2025-05-06',
+  compatibilityDate: '2024-07-08',
 
   nitro: {
+    experimental: {
       // Enable Server API documentation within NuxtHub
       openAPI: true,
+    },
   },
 
   hub: {
