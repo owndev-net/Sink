@@ -32,6 +32,15 @@ const { Meta_K, Ctrl_K } = useMagicKeys({
   },
 })
 
+function sanitizeSlotAttrs(attrs?: Record<string, unknown>) {
+  if (!attrs)
+    return {}
+
+  return Object.fromEntries(
+    Object.entries(attrs).filter(([key]) => !key.startsWith('$')),
+  ) as Record<string, unknown>
+}
+
 watch([Meta_K, Ctrl_K], (v) => {
   if (v[0] || v[1])
     isOpen.value = true
@@ -49,7 +58,7 @@ function selectLink(link: Link | undefined) {
 
 async function getLinks() {
   try {
-    links.value = await useAPI('/api/link/search') as Link[]
+    links.value = await useAPI<Link[]>('/api/link/search')
   }
   catch (error) {
     console.error(error)
@@ -64,7 +73,7 @@ onMounted(() => {
 <template>
   <TriggerTemplate v-slot="attrs">
     <Button
-      v-bind="attrs"
+      v-bind="sanitizeSlotAttrs(attrs)"
       variant="outline"
       size="sm"
       class="
@@ -99,7 +108,7 @@ onMounted(() => {
   </TriggerTemplate>
   <SearchTemplate>
     <Command class="h-auto">
-      <CommandInput v-model="searchTerm" :placeholder="$t('links.search_placeholder')" />
+      <CommandInput v-model="searchTerm" :placeholder="$t('links.search_placeholder')" autocomplete="off" />
     </Command>
     <!-- disable command search -->
     <Command class="flex-1">
